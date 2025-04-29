@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% load static %}
+
+{% block content %}
+    <!-- Header -->
+    <header class="bg-dark py-5 text-center">
+        <h1 class="display-4 fw-bolder text-white">Your Shopping Cart</h1>
+        <p class="lead fw-normal text-white-50">Review and manage your selected items</p>
+    </header>
+    <br/>
+
+    <div class="container">
+        {% if cart_products %}
+            {% for product in cart_products %}
+                <div class="card mb-4 shadow-sm border-0 rounded">
+                    <div class="row g-0 align-items-center">
+                        <div class="col-md-3 text-center">
+                            <img src="{{ product.image.url }}" class="img-fluid rounded" alt="Product Image" style="max-height: 150px;">
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card-body">
+                                <h5 class="card-title fw-bold">{{ product.name }}</h5>
+                                <p class="card-text text-muted">{{ product.description }}</p>
+
+                                <div class="mb-2">
+                                    {% if product.is_sale %}
+                                        <span class="text-muted text-decoration-line-through">GHC {{ product.price }}</span>
+                                        <span class="text-danger fw-bold" id="price{{ product.id }}">GHC {{ product.sale_price }}</span>
+                                    {% else %}
+                                        <span class="fw-bold" id="price{{ product.id }}">GHC {{ product.price }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 text-center">
+                            <div class="input-group quantity-control" style="max-width: 140px; margin: auto;">
+                                <button class="btn btn-outline-danger decrease-qty" data-index="{{ product.id }}" type="button">−</button>
+                                <input type="number" class="form-control text-center quantity-input" 
+                                       id="quantity{{ product.id }}" 
+                                       value="{% for key, value in quantities.items %}{% if key == product.id|slugify %}{{ value }}{% endif %}{% endfor %}" 
+                                       min="1">
+                                <button class="btn btn-outline-primary increase-qty" data-index="{{ product.id }}" type="button">+</button>
+                            </div>
+                        </div>
+
+                       <!--<button type="button" class="remove-item btn text-danger d-flex align-items-center justify-content-left" 
+                                data-index="{{ product.id }}" 
+                                style="border: none; background: none; color: #ff6f00; font-weight: 500;">
+                            <img src="https://img.icons8.com/fluency/24/delete-forever.png" alt="Remove" style="margin-right: 5px;">
+                            Remove
+                        </button> -->
+                        <br/><br/>
+
+                        <button type="button" data-index="{{ product.id }}" class="btn btn-danger delete-product">Remove</button>
+
+                        
+
+                    </div>
+                </div>
+            {% endfor %}
+
+            <div class="text-end mt-4">
+                <h3 class="fw-bold">Total: <span class="text-primary" id="cart-total">GHC {{ totals }}</span></h3>
+            </div>
+        {% else %}
+            <div class="card shadow p-5 text-center mx-auto" style="max-width: 600px; border-radius: 20px;">
+                <div class="mb-3">
+                    <img src="https://img.icons8.com/fluency/128/empty-box.png" alt="Empty Cart">
+                </div>
+                <h3 class="fw-bold">Your cart is empty!</h3>
+                <p class="text-muted">Browse our categories and discover our best deals!</p>
+                <a href="{% url 'home' %}" class="btn btn-primary">Start Shopping</a>
+            </div>
+        {% endif %}
+    </div>
+    <br/><br/>
+
+    <script>
+$(document).ready(function () {
+    function updateTotal() {
+        let total = 0;
+        $(".quantity-input").each(function () {
+            let productID = $(this).attr("id").replace("quantity", "");
+            let quantity = parseInt($(this).val()) || 1;  // Default to 1 if NaN
+            let priceText = $("#price" + productID).text().replace(/[^\d.]/g, ""); // Extract only numbers
+            let price = parseFloat(priceText) || 0;
+
+            total += quantity * price;
+        });
+        $("#cart-total").text("GHC " + total.toFixed(2));
+    }
+
+    // Increase Quantity
+    $(document).on("click", ".increase-qty", function () {
+        let productID = $(this).data("index");
+        let inputField = $("#quantity" + productID);
+        inputField.val(parseInt(inputField.val()) + 1);
+        updateTotal();
+    });
+
+    // Decrease Quantity (min 1)
+    $(document).on("click", ".decrease-qty", function () {
+        let productID = $(this).data("index");
+        let inputField = $("#quantity" + productID);
+        let currentValue = parseInt(inputField.val());
+        if (currentValue > 1) {
+            inputField.val(currentValue - 1);
+            updateTotal();
+        }
+    });
+
+    // Handle Manual Input for Quantity
+    $(document).on("input", ".quantity-input", function () {
+        let value = parseInt($(this).val());
+        if (isNaN(value) || value < 1) {
+            $(this).val(1);
+        }
+        updateTotal();
+    });
+
+    // Remove item from cart (AJAX request)
+    $(document).on('click', '.delete-product', function(e) {
+        e.preventDefault();
+
+        let productCard = $(this).closest('.card');  // Get the card element
+        let productid = $(this).data('index');  // Get product ID
+
+        $.ajax({
+            type: 'POST',
+            url: '{% url "cart_delete" %}',
+            data: {
+                product_id: productid,
+                csrfmiddlewaretoken: '{{ csrf_token }}',
+                action: 'post'
+            },
+            success: function(json) {
+                console.log("Product removed successfully:", json);
+                productCard.fadeOut(300, function () { 
+                    $(this).remove(); 
+                    updateTotal(); // Update the total after removal
+                });
+            },
+            error: function(xhr, errmsg, err) {
+                console.error("Error removing product:", errmsg, err);
+                alert("Failed to remove product. Please try again.");
+            }
+        });
+    });
+
+    // Initialize total on page load
+    updateTotal();
+});
+</script>
+
+{% endblock %}

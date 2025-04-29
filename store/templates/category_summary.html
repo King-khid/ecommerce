@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block content %} 
+
+<!-- Hero Section -->
+<header class="hero-section text-white text-center">
+    <div class="overlay"></div>
+    <div class="container position-relative py-5">
+        <h1 class="display-4 fw-bold">Explore Our Categories</h1>
+        <p class="lead text-white-50">Find the perfect products tailored to your needs</p>
+    </div>
+</header>
+
+<!-- Categories Section -->
+<div class="container my-5">
+    <div class="row g-4 justify-content-center">
+        {% for category in categories %}
+        <div class="col-md-4 col-lg-3">
+            <div class="card category-card shadow-sm border-0 text-center">
+                <div class="card-body">
+                    <div class="icon mb-3">
+                        <i class="fas fa-box-open fa-2x text-primary"></i>
+                    </div>
+                    <h5 class="card-title">{{ category }}</h5>
+                    <a href="{% url 'category' category %}" class="btn btn-outline-primary mt-2">Shop Now</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Custom CSS -->
+<style>
+.hero-section {
+    background: url('https://source.unsplash.com/1600x900/?technology,ecommerce') center/cover no-repeat;
+    position: relative;
+    padding: 100px 0;
+}
+
+.hero-section .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.category-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: 12px;
+}
+
+.category-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.category-card .icon {
+    background: rgba(0, 123, 255, 0.1);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+</style>
+
+{% endblock %}

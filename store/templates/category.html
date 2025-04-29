@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+
+
+{% load static %} 
+
+{% block content %}
+    <!-- Header -->
+    <header class="bg-dark py-5">
+        <div class="container px-4 px-lg-5 my-5">
+            <div class="text-center text-white">
+                <h1 class="display-4 fw-bolder">{{ category }}</h1>
+                <p class="lead fw-normal text-white-50 mb-0">Category Page</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Section -->
+   <section class="py-5 bg-light">
+    <div class="container px-4 px-lg-5 mt-5">
+        <div class="text-center mb-5">
+            <h2 class="fw-bolder">Featured Products</h2>
+            <p class="text-muted">Handpicked selections for you</p>
+        </div>
+        <div class="row gx-4 gx-lg-5 row-cols-2 row-cols-md-3 row-cols-xl-4 justify-content-center">
+            {% for product in products %}
+                <div class="col mb-5">
+                    <div class="card h-100 shadow-lg border-0">
+                        <!-- Clickable Card -->
+                        <a href="{% url 'product' product.id %}" class="text-decoration-none text-dark">
+                            {% if product.is_sale %}
+                                <div class="badge bg-danger text-white position-absolute" style="top: 0.5rem; right: 0.5rem">Sale</div>
+                            {% endif %}
+                            <img class="card-img-top" src="{{ product.image.url }}" alt="{{ product.name }}" style="height: 250px; object-fit: cover;" />
+                            <div class="card-body p-4 text-center">
+                                <h5 class="fw-bold">{{ product.name }}</h5>
+                                <p class="text-muted">{{ product.description|truncatechars:50 }}</p>
+                                <div class="mb-2">
+                                    {% if product.is_sale %}
+                                        <span class="text-muted text-decoration-line-through">GHC {{ product.price }}</span>&nbsp;
+                                        <span class="text-danger fw-bold">GHC {{ product.sale_price }}</span>
+                                    {% else %}
+                                        <span class="fw-bold">GHC {{ product.price }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </a>
+                        <div class="card-footer p-4 pt-0 border-top-0 bg-transparent text-center">
+                            <button type="button" value="{{ product.id }}" 
+                                    class="btn btn-primary btn-lg shadow-sm add-cart"
+                                    data-product-id="{{ product.id }}">
+                                <i class="fas fa-shopping-cart me-2"></i> Add To Cart
+                            </button>
+
+                      
+
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Styles for Hover Effect -->
+<style>
+    .card {
+        transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    }
+
+    .card:hover {
+        transform: translateY(-8px); /* Slight lift effect */
+        box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.2); /* Enhanced shadow */
+    }
+</style>
+
+
+
+<script>
+$(document).on('click', '.add-cart', function(e){
+    e.preventDefault();
+
+    let productID = $(this).data('product-id');  // Corrected to match button
+    let csrfToken = '{{ csrf_token }}';  // CSRF token
+    let quantity = 1;  // Default quantity
+
+    $.ajax({
+        type: 'POST',
+        url: '{% url "cart_add" %}',
+        data: {
+            product_id: productID,
+            product_qty: quantity,
+            csrfmiddlewaretoken: csrfToken,
+            action: 'post'
+        },
+        success: function(json){
+            $('#cart_quantity').text(json.qty);  // Update cart count dynamically
+        },
+        error: function(xhr, errMsg, err){
+            console.error("Error adding product to cart:", errMsg);
+        }
+    });
+});
+
+</script>
+
+
+
+
+{% endblock %}
+
+
+
+
